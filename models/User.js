@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const TeacherSchema = new mongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -8,19 +8,18 @@ const TeacherSchema = new mongoose.Schema(
     },
     surname: {
       type: String,
-      required: true,
     },
     contactnumber: {
       type: String,
-      required: true,
     },
     education: {
       type: String,
-      required: true,
+    },
+    age: {
+      type: Number,
     },
     qualification: {
       type: String,
-      required: true,
     },
     address: {
       type: String,
@@ -43,6 +42,25 @@ const TeacherSchema = new mongoose.Schema(
       type: Boolean,
       // 0 not , 1 yes
     },
+    role: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'role',
+    },
+
+    subjects: [
+      {
+        subject: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'subjects',
+        },
+      },
+    ],
+    appointments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'appointments',
+      },
+    ],
     date: {
       type: Date,
       default: Date.now,
@@ -51,4 +69,4 @@ const TeacherSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = Teacher = mongoose.model('teacher', TeacherSchema);
+module.exports = User = mongoose.model('user', UserSchema);

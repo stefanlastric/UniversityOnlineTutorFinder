@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const SubjectSchema = new mongoose.Schema(
+const AppointmentSchema = new mongoose.Schema(
   {
     title: {
       type: String,
@@ -11,10 +11,10 @@ const SubjectSchema = new mongoose.Schema(
       required: true,
     },
     timelimit: {
-      type: Number,
+      type: String,
       required: true,
     },
-    date: {
+    datecreated: {
       type: Date,
       default: Date.now,
     },
@@ -23,8 +23,17 @@ const SubjectSchema = new mongoose.Schema(
       //0 not 1 yes
       default: false,
     },
+    users: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+      },
+    ],
   },
   { timestamps: true }
 );
 
-module.exports = Subject = mongoose.model('subject', SubjectSchema);
+module.exports = Appointment = mongoose.model(
+  'appointments',
+  AppointmentSchema
+);

@@ -1,5 +1,8 @@
 const express = require('express');
 const connectDB = require('./config/db');
+require('./models/Appointment');
+require('./models/Role');
+require('./models/User');
 
 // token kreira library unutar aplikacije
 const app = express();
@@ -15,12 +18,11 @@ app.get('/', (req, res) => res.send('API Running'));
 
 const PORT = process.env.PORT || 5000;
 
-app.use('/admins', require('./routes/admins'));
-app.use('/students', require('./routes/students'));
-app.use('/teachers', require('./routes/teachers'));
-//app.use('/appointments', require('./routes/appointments'));
-app.use('/adminlogin', require('./routes/adminlogin'));
-app.use('/teacherlogin', require('./routes/teacherlogin'));
-app.use('/studentlogin', require('./routes/studentlogin'));
+app.use('/roles', require('./routes/roles'));
+app.use('/users', require('./routes/users'));
+//app.use('/students', require('./routes/students'));
+//app.use('/subjects', require('./routes/subjects'));
+app.use('/appointments', require('./routes/appointments'));
+app.use('/login', require('./routes/login'));
 
 app.listen(PORT, () => console.log(`server started on port ${PORT}`));

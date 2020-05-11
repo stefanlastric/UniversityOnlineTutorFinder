@@ -1,27 +1,34 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const auth = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
 
-const Admin = require('../models/Admin');
-let secret;
-if (!process.env.HEROKU) {
-  const config = require('config');
-  secret = config.get('jwtSecret');
-} else {
-  secret = process.env.jwtSecret;
-}
+const User = require('../models/User');
 
+//@route    GET auth
+//@desc     Test route
+//@access   public
+
+router.get('/', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error!');
+  }
+});
+
+//@route    POST auth
+//@desc     Authenticate user and get token
+//@access   public
 router.post(
   '/',
   [
-    check('name', 'Name is required').not().isEmpty(),
     check('email', 'Please enter valid email').isEmail(),
-    check(
-      'password',
-      'Please enter a password with 5 or more characters'
-    ).isLength({ min: 5 }),
+    check('password', 'Password is required').exists(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -29,33 +36,29 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, password } = req.body;
+    const { email, password } = req.body;
 
     try {
-      //see if admin exists
-      let admin = await Admin.findOne({ email });
+      //see if user exists
+      let user = await User.findOne({ email });
 
-      if (admin) {
+      if (!user) {
         return res
           .status(400)
-          .json({ errors: [{ msg: 'Admin already exists' }] });
+          .json({ errors: [{ msg: 'Invalid credentials' }] });
       }
 
-      //new instance of admin
-      admin = new Admin({
-        name,
-        email,
-        password,
-      });
+      const isMatch = await bcrypt.compare(password, user.password);
 
-      //encrypt password
-      const salt = await bcrypt.genSalt(10);
-      admin.password = await bcrypt.hash(password, salt);
-      await admin.save();
+      if (!isMatch) {
+        return res
+          .status(400)
+          .json({ errors: [{ msg: 'Invalid credentials' }] });
+      }
 
       const payload = {
-        admin: {
-          id: admin.id,
+        user: {
+          id: user.id,
         },
       };
       let secret;
