@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
 
-const Teacher = require('../models/Teacher');
+const User = require('../models/User');
 
 let secret;
 if (!process.env.HEROKU) {
@@ -34,8 +34,8 @@ router.post(
 
     try {
       //see if teacher exists
-      let teacher = await Teacher.findOne({ email });
-
+      let teacher = await User.findOne({ email });
+      const dbrole = await Role.findOne({ name: 'Teacher' });
       if (teacher) {
         return res
           .status(400)
@@ -43,7 +43,7 @@ router.post(
       }
 
       //new instance of teacher
-      teacher = new Teacher({
+      teacher = new User({
         name,
         email,
         password,
@@ -53,7 +53,9 @@ router.post(
       const salt = await bcrypt.genSalt(10);
       teacher.password = await bcrypt.hash(password, salt);
       await teacher.save();
-
+      await User.findByIdAndUpdate(teacher._id, {
+        $push: { role: dbrole._id },
+      });
       const payload = {
         teacher: {
           id: teacher.id,

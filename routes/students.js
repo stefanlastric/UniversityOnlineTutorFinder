@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
 
-const Student = require('../models/Student');
+const User = require('../models/User');
 let secret;
 if (!process.env.HEROKU) {
   const config = require('config');
@@ -22,8 +22,6 @@ router.post(
       'password',
       'Please enter a password with 5 or more characters'
     ).isLength({ min: 5 }),
-    check('contactnumber', 'Contact number is required').not().isEmpty(),
-    check('age', 'Age is required').not().isEmpty(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -35,8 +33,8 @@ router.post(
 
     try {
       //see if student exists
-      let student = await Student.findOne({ email });
-
+      let student = await User.findOne({ email });
+      const dbrole = await Role.findOne({ name: 'Student' });
       if (student) {
         return res
           .status(400)
@@ -44,7 +42,7 @@ router.post(
       }
 
       //new instance of student
-      student = new Student({
+      student = new User({
         name,
         email,
         password,
@@ -56,6 +54,10 @@ router.post(
       const salt = await bcrypt.genSalt(10);
       student.password = await bcrypt.hash(password, salt);
       await student.save();
+
+      await User.findByIdAndUpdate(student._id, {
+        $push: { role: dbrole._id },
+      });
 
       const payload = {
         student: {
@@ -80,5 +82,17 @@ router.post(
     }
   }
 );
+//@route    GET users
+//@desc     Get all students
+//@access   public
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find({ role: '5eb9853a663a7c16c2e7c4aa' });
+    res.json(users);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
 
 module.exports = router;

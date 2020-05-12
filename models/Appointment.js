@@ -23,12 +23,16 @@ const AppointmentSchema = new mongoose.Schema(
       //0 not 1 yes
       default: false,
     },
-    users: [
-      {
+    users: {
+      createdby: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',
       },
-    ],
+      acceptedby: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+      },
+    },
   },
   { timestamps: true }
 );

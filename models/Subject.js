@@ -19,6 +19,10 @@ const SubjectSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    createdby: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+    },
   },
   { timestamps: true }
 );

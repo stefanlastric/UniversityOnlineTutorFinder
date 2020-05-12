@@ -47,14 +47,11 @@ const UserSchema = new mongoose.Schema(
       ref: 'role',
     },
 
-    subjects: [
-      {
-        subject: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'subjects',
-        },
-      },
-    ],
+    subject: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'subjects',
+    },
+
     appointments: [
       {
         type: mongoose.Schema.Types.ObjectId,

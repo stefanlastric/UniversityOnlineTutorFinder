@@ -31,10 +31,10 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     try {
-      const dbrole = await Role.findOne({ name: role });
+      const dbrole = await Role.findOne({ name: 'Admin' });
       //see if user exists
       let user = await User.findOne({ email });
 
@@ -83,12 +83,12 @@ router.post(
     }
   }
 );
-//@route    GET movies
-//@desc     Get all movies
+
+//@route    GET users
+//@desc     Get all users
 //@access   public
-router.get('/', auth, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    console.log(req.user);
     const users = await User.find().populate('role');
     res.json(users);
   } catch (err) {
@@ -97,7 +97,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.delete('/', async (req, res) => {
+router.delete('/', auth, async (req, res) => {
   try {
     await User.deleteMany();
     return res.status(200).json({ msg: 'success' });
@@ -105,4 +105,23 @@ router.delete('/', async (req, res) => {
     console.error(err.message);
   }
 });
+
+//@route    GET users/roleid
+//@desc     Get users by role
+//@access   public
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const users = await User.find({ role: req.params.id }).populate('role');
+    //check if users exist
+    if (!users) {
+      return res.status(404).json({ msg: 'Users does not exist' });
+    }
+
+    res.json(users);
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 module.exports = router;

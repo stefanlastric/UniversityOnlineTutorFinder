@@ -12,7 +12,7 @@ const User = require('../models/User');
 //@access   public
 router.get('/', async (req, res) => {
   try {
-    const appointments = await Appointment.find().populate('users');
+    const appointments = await Appointment.find();
     res.json(appointments);
   } catch (err) {
     console.error(err.message);
@@ -84,7 +84,7 @@ router.post(
       const appointments = new Appointment(appointmentsFields);
       await appointments.save();
       await Appointment.findByIdAndUpdate(appointments._id, {
-        $push: { users: req.user.id },
+        $push: { users: { createdby: req.user.id } },
       });
       const dbUser = await User.findById(req.user.id);
       await User.findByIdAndUpdate(req.user.id, {
@@ -110,12 +110,17 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ msg: 'Appointment does not exist' });
     }
 
-    const user = await User.findById(req.user.id).select('-password');
-    //TODO check if the user that created it is logged
-    if (!user) {
-      res.status(401).json({ msg: 'Unauthorised access' });
-    }
+    const userT = await User.findOne({ _id: req.user.id });
+    const roles = await Role.find();
 
+    if (
+      appointments.approved == true &&
+      userT.role == null &&
+      roles.name != 'Student' &&
+      appointments.users.createdby != userT._id
+    ) {
+      return res.status(401).json({ msg: 'Authorization denied' });
+    }
     await appointments.remove();
 
     res.status(200).json({ msg: 'Appointment removed' });
@@ -127,10 +132,55 @@ router.delete('/:id', auth, async (req, res) => {
 
 router.delete('/', async (req, res) => {
   try {
+    const userT = await User.findOne({ _id: req.user.id });
+    const roles = await Role.find();
+
+    if (userT.role == null && roles.name != 'Admin') {
+      return res.status(401).json({ msg: 'Authorization denied' });
+    }
     await Appointment.deleteMany();
     return res.status(200).json({ msg: 'success' });
   } catch (err) {
     console.error(err.message);
+  }
+});
+
+//@route    POST appointments/approve/:id
+//@desc     Approve a appointment
+//@access   Private
+router.post('/approve/:id', auth, async (req, res) => {
+  try {
+    const appointments = await Appointment.findById(req.params.id);
+
+    //check if the appointment has already been approved
+    if (appointments.approved == true) {
+      return res.status(400).json({ msg: 'Appointment already approved' });
+    }
+
+    //check if the person is a teacher
+    const userT = await User.findOne({ _id: req.user.id });
+    const roles = await Role.find();
+    if (userT.role == null && roles.name != 'Teacher') {
+      return res.status(401).json({ msg: 'Authorization denied' });
+    }
+
+    //update of approved on appointment
+    await Appointment.updateOne(
+      { _id: appointments.id },
+      { $set: { approved: 'true' } }
+    );
+
+    //adding acceptedby field in Appointment that points to Teacher who accepted it
+    await Appointment.findByIdAndUpdate(appointments._id, {
+      $push: { users: { acceptedby: req.user.id } },
+    });
+
+    await appointments.save();
+
+    res.json(appointments);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
 
