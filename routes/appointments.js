@@ -114,9 +114,9 @@ router.delete('/:id', auth, async (req, res) => {
     const roles = await Role.find();
 
     if (
-      appointments.approved == true &&
-      userT.role == null &&
-      roles.name != 'Student' &&
+      appointments.approved === true ||
+      userT.role === null ||
+      roles.name != 'Student' ||
       appointments.users.createdby != userT._id
     ) {
       return res.status(401).json({ msg: 'Authorization denied' });
@@ -135,7 +135,7 @@ router.delete('/', async (req, res) => {
     const userT = await User.findOne({ _id: req.user.id });
     const roles = await Role.find();
 
-    if (userT.role == null && roles.name != 'Admin') {
+    if (userT.role === null || roles.name != 'Admin') {
       return res.status(401).json({ msg: 'Authorization denied' });
     }
     await Appointment.deleteMany();
@@ -153,14 +153,14 @@ router.post('/approve/:id', auth, async (req, res) => {
     const appointments = await Appointment.findById(req.params.id);
 
     //check if the appointment has already been approved
-    if (appointments.approved == true) {
+    if (appointments.approved === true) {
       return res.status(400).json({ msg: 'Appointment already approved' });
     }
 
     //check if the person is a teacher
     const userT = await User.findOne({ _id: req.user.id });
     const roles = await Role.find();
-    if (userT.role == null && roles.name != 'Teacher') {
+    if (userT.role === null || roles.name != 'Teacher') {
       return res.status(401).json({ msg: 'Authorization denied' });
     }
 

@@ -154,4 +154,74 @@ router.delete('/', auth, async (req, res) => {
   }
 });
 
+//@route    POST subjects/review/:id
+//@desc     Review on a subject
+//@access   Private
+router.post(
+  '/review/:id',
+  [auth, [check('text', 'Text is required').not().isEmpty()]],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findById(req.user.id).select('-password');
+      const subjects = await Subjects.findById(req.params.id);
+
+      const newReview = {
+        text: req.body.text,
+        name: user.name,
+        user: req.user.id,
+      };
+
+      subjects.reviews.unshift(newReview);
+
+      await subjects.save();
+
+      res.json(subjects.reviews);
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  }
+);
+
+//@route    DELETE subjects/review/:id/:review_id
+//@desc     Delete review on a subject
+//@access   Private
+router.delete('/review/:id/:review_id', auth, async (req, res) => {
+  try {
+    const subjects = await Subjects.findById(req.params.id);
+
+    //Take review from a subject
+    const review = subjects.reviews.find(
+      (review) => review.id === req.params.review_id
+    );
+
+    if (!review) {
+      return res.status(404).json({ msg: 'Review does not exist' });
+    }
+
+    if (review.user.toString() !== req.user.id) {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    //Get remove index
+    const removeIndex = subjects.reviews
+      .map((review) => review.user.toString())
+      .indexOf(req.user.id);
+
+    subjects.reviews.splice(removeIndex, 1);
+
+    await subjects.save();
+
+    res.json(subjects.reviews);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;
