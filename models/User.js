@@ -52,12 +52,11 @@ const UserSchema = new mongoose.Schema(
       ref: 'subjects',
     },
 
-    appointments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'appointments',
-      },
-    ],
+    appointments: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'appointments',
+    },
+
     date: {
       type: Date,
       default: Date.now,

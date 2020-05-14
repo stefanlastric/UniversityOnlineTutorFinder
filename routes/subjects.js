@@ -65,7 +65,7 @@ router.post(
 
     try {
       const userT = await User.findOne({ _id: req.user.id });
-      const roles = await Role.find();
+      const roles = await Role.findOne({ _id: userT.role });
 
       if (userT.role == null && roles.name != 'Teacher') {
         return res
@@ -121,7 +121,7 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ msg: 'Subject does not exist' });
     }
     const userT = await User.findOne({ _id: req.user.id });
-    const roles = await Role.find();
+    const roles = await Role.findOne({ _id: userT.role });
 
     if (
       userT.role == null &&
@@ -139,10 +139,39 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+//@route    DELETE subjects/:idadmin
+//@desc     Delete subject by id by Admin (ADMIN CRUD)
+//@access   private
+router.delete('/:idadmin', auth, async (req, res) => {
+  try {
+    const subjects = await Subject.findById(req.params.id);
+
+    if (!subjects) {
+      return res.status(404).json({ msg: 'Subject does not exist' });
+    }
+
+    const userT = await User.findOne({ _id: req.user.id });
+    const roles = await Role.findOne({ _id: userT.role });
+
+    if (userT.role === null || roles.name != 'Admin') {
+      return res.status(401).json({ msg: 'Authorization denied' });
+    }
+    await subjects.remove();
+
+    res.status(200).json({ msg: 'Subject removed' });
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+//@route    DELETE subjects
+//@desc     Delete all subject
+//@access   private
 router.delete('/', auth, async (req, res) => {
   try {
     const userT = await User.findOne({ _id: req.user.id });
-    const roles = await Role.find();
+    const roles = await Role.findOne({ _id: userT.role });
 
     if (userT.role == null && roles.name != 'Admin') {
       return res.status(401).json({ msg: 'Authorization denied' });

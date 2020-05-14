@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
 
+const auth = require('../middleware/auth');
 const User = require('../models/User');
 let secret;
 if (!process.env.HEROKU) {
@@ -82,12 +83,20 @@ router.post(
     }
   }
 );
+// ima vec u users get users by role, pa ovo i ne treba
+
 //@route    GET users
 //@desc     Get all students
 //@access   public
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
-    const users = await User.find({ role: '5eb9853a663a7c16c2e7c4aa' });
+    const userT = await User.findOne({ _id: req.user.id });
+    const roles = await Role.findOne({ _id: userT.role });
+
+    if (userT.role === null || roles.name != 'Admin') {
+      return res.status(401).json({ msg: 'Authorization denied' });
+    }
+    const users = await User.find({ 'roles.name': 'Student' });
     res.json(users);
   } catch (err) {
     console.error(err.message);

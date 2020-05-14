@@ -21,7 +21,7 @@ const SubjectSchema = new mongoose.Schema(
     },
     review: {
       user: {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'users',
       },
       text: {

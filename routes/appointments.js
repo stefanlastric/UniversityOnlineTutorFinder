@@ -111,7 +111,7 @@ router.delete('/:id', auth, async (req, res) => {
     }
 
     const userT = await User.findOne({ _id: req.user.id });
-    const roles = await Role.find();
+    const roles = await Role.findOne({ _id: userT.role });
 
     if (
       appointments.approved === true ||
@@ -133,7 +133,7 @@ router.delete('/:id', auth, async (req, res) => {
 router.delete('/', async (req, res) => {
   try {
     const userT = await User.findOne({ _id: req.user.id });
-    const roles = await Role.find();
+    const roles = await Role.findOne({ _id: userT.role });
 
     if (userT.role === null || roles.name != 'Admin') {
       return res.status(401).json({ msg: 'Authorization denied' });
@@ -142,6 +142,32 @@ router.delete('/', async (req, res) => {
     return res.status(200).json({ msg: 'success' });
   } catch (err) {
     console.error(err.message);
+  }
+});
+
+//@route    DELETE appointments/:idadmin
+//@desc     Delete appointment by id by Admin (ADMIN CRUD)
+//@access   private
+router.delete('/:idadmin', auth, async (req, res) => {
+  try {
+    const appointments = await Appointment.findById(req.params.id);
+
+    if (!appointments) {
+      return res.status(404).json({ msg: 'Appointment does not exist' });
+    }
+
+    const userT = await User.findOne({ _id: req.user.id });
+    const roles = await Role.findOne({ _id: userT.role });
+
+    if (userT.role === null || roles.name != 'Admin') {
+      return res.status(401).json({ msg: 'Authorization denied' });
+    }
+    await appointments.remove();
+
+    res.status(200).json({ msg: 'Appointment removed' });
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ msg: 'Server Error' });
   }
 });
 
@@ -159,7 +185,7 @@ router.post('/approve/:id', auth, async (req, res) => {
 
     //check if the person is a teacher
     const userT = await User.findOne({ _id: req.user.id });
-    const roles = await Role.find();
+    const roles = await Role.findOne({ _id: userT.role });
     if (userT.role === null || roles.name != 'Teacher') {
       return res.status(401).json({ msg: 'Authorization denied' });
     }
