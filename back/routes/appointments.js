@@ -77,9 +77,7 @@ router.post(
       //     { $set: appointmentsFields },
       //     { new: true, upsert: true }
       //   );
-      //   console.log('test');
-      //   return res.json(appointments);
-      // }
+
       //create appointment
       const appointments = new Appointment(appointmentsFields);
       await appointments.save();
